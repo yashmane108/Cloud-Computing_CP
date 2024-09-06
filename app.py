@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, url_for, send_from_directory
 
 app = Flask(__name__)
 
@@ -7,7 +7,7 @@ app = Flask(__name__)
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Check if the upload folder exists, if not, create it
+# Ensure the upload folder exists
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
@@ -27,7 +27,15 @@ def upload_file():
     if file:
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(filepath)
-        return f"File uploaded successfully: <a href='/uploads/{file.filename}'>{file.filename}</a>"
+        
+        # Generate the link based on the public Render domain
+        public_url = f"{request.host_url}uploads/{file.filename}"
+        return f"File uploaded successfully: <a href='{public_url}'>Download {file.filename}</a>"
+
+# Route to serve uploaded files
+@app.route('/uploads/<filename>')
+def download_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == '__main__':
     app.run(debug=True)
